@@ -1,4 +1,6 @@
-﻿using SparkybitTestTask.Services.Interfaces;
+﻿using MongoDB.Driver;
+using SparkybitTestTask.Model;
+using SparkybitTestTask.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,24 +11,38 @@ namespace SparkybitTestTask.Services.Implamentation
 {
     public class FileService : IFileService
     {
+        private readonly IMongoCollection<Logs> _mongoCollection;
+        public FileService(IMongoClient client)
+        {
+            var db = client.GetDatabase("Sparky");
+            _mongoCollection = db.GetCollection<Logs>("Logs");
+        }
+
         public List<List<int>> ReadFromFile(string fileName)
         {
             List<List<int>> result = new List<List<int>>();
 
-            using (StreamReader streamReader = new StreamReader(fileName))
+            try
             {
-                string fileContent = streamReader.ReadToEnd();
-                string[] lines = fileContent.Split("\r\n");
-
-                for(int i = 0; i<lines.Length; i++)
+                using (StreamReader streamReader = new StreamReader(fileName))
                 {
-                    result.Add(new List<int>());
-                    string []splittedLine = lines[i].Split(' ');
-                    for(int j = 0;j< splittedLine.Length; j++)
+                    string fileContent = streamReader.ReadToEnd();
+                    string[] lines = fileContent.Split("\r\n");
+
+                    for (int i = 0; i < lines.Length; i++)
                     {
-                        result[i].Add(Convert.ToInt32(splittedLine[j]));
+                        result.Add(new List<int>());
+                        string[] splittedLine = lines[i].Split(' ');
+                        for (int j = 0; j < splittedLine.Length; j++)
+                        {
+                            result[i].Add(Convert.ToInt32(splittedLine[j]));
+                        }
                     }
                 }
+            }
+            catch
+            {
+                _mongoCollection.InsertOne(new Logs { DateTime=DateTime.Now, Level=Level.Error, Title = "Reading from file", Description = $"{fileName} doesn't exist"});
             }
 
             return result;

@@ -1,4 +1,6 @@
-﻿using SparkybitTestTask.Services.Interfaces;
+﻿using MongoDB.Driver;
+using SparkybitTestTask.Model;
+using SparkybitTestTask.Services.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,6 +11,12 @@ namespace SparkybitTestTask.Services.Implamentation
 {
     public class FibonacciService : IFibonacciService
     {
+        private readonly IMongoCollection<Logs> _mongoCollection;
+        public FibonacciService(IMongoClient client)
+        {
+            var db = client.GetDatabase("Sparky");
+            _mongoCollection = db.GetCollection<Logs>("Logs");
+        }
         public void DoChanges(List<List<int>> rows)
         {
             foreach (List<int> row in rows)
@@ -54,6 +62,13 @@ namespace SparkybitTestTask.Services.Implamentation
                     }
                 }
             }
+
+            string fibonacciRow = String.Empty;
+            foreach(int number in numbers)
+            {
+                fibonacciRow+=number+" ";
+            }
+            _mongoCollection.InsertOne(new Logs { DateTime = DateTime.Now, Level = Level.Info, Title = "IsFibonacciRow", Description = $"{fibonacciRow}is Fibonacci row" });
 
             return true;
         }
