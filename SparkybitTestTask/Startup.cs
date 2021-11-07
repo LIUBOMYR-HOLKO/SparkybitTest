@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using MongoDB.Driver;
 using SparkybitTestTask.Services;
 using System;
 using System.Collections.Generic;
@@ -27,7 +28,11 @@ namespace SparkybitTestTask
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
+            services.AddSingleton<IMongoClient, MongoClient>(x =>
+            {
+                string connectionString = x.GetRequiredService<IConfiguration>()["MongoDB"];
+                return new MongoClient(connectionString);
+            });
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
